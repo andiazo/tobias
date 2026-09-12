@@ -1,0 +1,37 @@
+name = "pausas-activas"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# M3: el cron corre cada 15 min. Todos los horarios de pausa son multiplos de 15.
+[triggers]
+crons = ["*/15 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pausas-activas"
+database_id = "PENDIENTE_wrangler_d1_create"
+migrations_dir = "migrations"
+
+[vars]
+# Proxy de Kapso compatible con Meta Cloud API.
+KAPSO_BASE_URL = "https://api.kapso.ai/meta/whatsapp"
+# Numero de WhatsApp del piloto (phone_number_id de Meta / Kapso).
+WHATSAPP_PHONE_NUMBER_ID = ""
+# Base publica del Worker, usada para construir los links /p/:token.
+PUBLIC_BASE_URL = ""
+# Modo prueba: un numero desconocido que escribe primero queda registrado
+# automaticamente como empleado de la empresa demo y recibe el opt-in.
+# Apagar antes del piloto real.
+MODO_PRUEBA = "true"
+# Nombres de las plantillas aprobadas por Meta (M7). Vacios = solo mensajes
+# libres dentro de la ventana de 24 h, que es el modo de prueba actual.
+PLANTILLA_OPTIN = ""
+PLANTILLA_RECORDATORIO = ""
+
+# Secretos (wrangler secret put ...):
+#   KAPSO_API_KEY       - header X-API-Key contra el proxy de Kapso
+#   META_APP_SECRET     - verificacion de firma X-Hub-Signature-256 del webhook
+#   WEBHOOK_VERIFY_TOKEN- hub.verify_token del handshake GET de Meta
+#   TOKEN_SECRET        - HMAC de los tokens de /p/:token y /r/:token
+#   ADMIN_TOKEN         - protege las rutas /admin/*
