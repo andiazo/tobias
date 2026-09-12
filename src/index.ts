@@ -3,6 +3,7 @@ import type { Env } from "./env";
 import { firmaValida, procesarWebhook } from "./webhook";
 import { abrirPausa, completarPausa, registrarAvance, reportarMolestia } from "./pages/pausa";
 import { admin } from "./admin";
+import { exportarCsv, verReporte } from "./pages/reporte";
 import { correrTick } from "./scheduled";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -47,6 +48,9 @@ app.get("/p/:token", (c) => abrirPausa(c.env, c.req.param("token")));
 app.post("/p/:token/done", (c) => completarPausa(c.env, c.req.param("token")));
 app.post("/p/:token/avance", (c) => registrarAvance(c.env, c.req.param("token"), c.req.raw));
 app.post("/p/:token/molestia", (c) => reportarMolestia(c.env, c.req.param("token"), c.req.raw));
+
+app.get("/r/:token", (c) => verReporte(c.env, c.req.param("token"), new URL(c.req.url)));
+app.get("/r/:token/export.csv", (c) => exportarCsv(c.env, c.req.param("token"), new URL(c.req.url)));
 
 app.route("/admin", admin);
 

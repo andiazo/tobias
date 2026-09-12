@@ -7,6 +7,7 @@ import {
   crearEmpleado,
   empleadoPorTelefono,
   marcarMensajeProcesado,
+  marcarPausaConfirmada,
   marcarPausaPospuesta,
   pausaAbiertaDelEmpleado,
   pausaPorId,
@@ -193,6 +194,10 @@ async function manejarBoton(
         await enviarTexto(env, empleado.telefono_e164, "No encontramos una pausa activa para este link.");
         return;
       }
+      // Tocar el boton ya es una confirmacion: el reporte la muestra aparte
+      // de las completadas con cronometro, y la brecha entre las dos es la
+      // que dice si el boton sirve como evidencia.
+      await marcarPausaConfirmada(env, pausa.id);
       await enviarLinkDePausa(env, empleado, pausa);
       return;
     }

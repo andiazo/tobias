@@ -17,7 +17,7 @@ falta para cerrar un ciclo completo de punta a punta.
 | M3 · Cron | completo — programa por horario, días hábiles, idempotente, barre vencidas |
 | M4 · Webapp de la pausa | completo — 6 ejercicios, cronómetro, barra, saltar, `sendBeacon` |
 | M5 · Molestias | completo — 6 zonas, comentario ≤200, confirmación por WhatsApp |
-| M6 · Reporte SST | pendiente |
+| M6 · Reporte SST | completo — HTML sin login, CSV fechado, filtro por rango |
 | M7 · Plantillas Meta | pendiente (trabajo externo) |
 
 ## Modo prueba: sin plantillas aprobadas
@@ -124,6 +124,7 @@ npx wrangler dev --port 8787 --local \
 npm run test:local      # canal: firma, alta, ventana, opt-in, SALIR
 npm run test:cron       # horarios, días hábiles, idempotencia, barrido
 npm run test:pausa      # rutina, sendBeacon, molestias
+npm run test:reporte    # agregaciones, orden, CSV, zona horaria
 npm run test:navegador  # lo mismo en Chromium a 390px de ancho
 ```
 
@@ -143,6 +144,8 @@ Necesita `.dev.vars` (copia `.dev.vars.example`) con los valores que usa el test
 | `GET /health` | health check |
 | `GET /webhook/kapso` | handshake de verificación de Meta |
 | `POST /webhook/kapso` | eventos entrantes: firma, log y router |
+| `GET /r/:token` | reporte de evidencia para SST, sin login |
+| `GET /r/:token/export.csv` | una fila por pausa, con `?desde=` y `?hasta=` |
 | `GET /p/:token` | rutina de la pausa (token HMAC, expira en 60 min) |
 | `POST /p/:token/done` | marca la pausa completada |
 | `POST /p/:token/avance` | `sendBeacon` al cerrar: hasta qué ejercicio llegó |
@@ -152,6 +155,7 @@ Necesita `.dev.vars` (copia `.dev.vars.example`) con los valores que usa el test
 | `POST /admin/recordatorio` | dispara un recordatorio sin esperar al cron |
 | `POST /admin/tick` | corre un tick del cron, con `ahora` opcional para simular |
 | `POST /admin/consentimiento` | marca consentimiento a mano (solo `MODO_PRUEBA`) |
+| `POST /admin/ergonomia` | link del Form y conteo de respuestas |
 | `POST /admin/reset` | borra todos los datos (solo `MODO_PRUEBA`) |
 | `GET /admin/estado` | consentimiento, ventana, pausas y últimos eventos |
 
@@ -172,6 +176,14 @@ Las rutas `/admin/*` exigen `Authorization: Bearer $ADMIN_TOKEN`.
 - **Tick de 15 min.** El cron no dispara exacto, así que la hora local se redondea
   hacia abajo al múltiplo de 15: si llega a las 10:07, el bloque sigue siendo el
   de las 10:00.
+- **Fechas locales vs UTC.** `pausas.fecha` se guarda en hora local de la empresa
+  y `created_at` en UTC. El reporte traduce los límites del rango a instantes UTC
+  del día local: si no, una molestia reportada a las 8 de la noche en Bogotá cae
+  en el día UTC siguiente y desaparece del reporte.
+- **Confirmada ≠ completada.** Tocar "Hacer pausa" marca `confirmada_at`; terminar
+  el cronómetro marca `completada_at`. El reporte muestra las dos columnas por
+  separado y la brecha entre ellas, que es la métrica que dice si el botón sirve
+  como evidencia.
 - **Ilustraciones en línea.** Los 6 SVG viajan dentro del HTML en vez de servirse
   como assets. Son menos de 1 KB cada uno; como archivos sueltos costarían 6
   peticiones extra en una conexión móvil. Por eso no hay binding de Static Assets.

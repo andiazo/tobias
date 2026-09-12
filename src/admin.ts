@@ -6,6 +6,7 @@ import type { Env } from "./env";
 import { modoPrueba } from "./env";
 import {
   crearEmpleado,
+  empresaPorId,
   registrarConsentimiento,
   crearPausa,
   empleadoPorTelefono,
@@ -64,7 +65,7 @@ admin.post("/empresa", async (c) => {
     )
     .run();
 
-  return c.json({ id, nombre: body.nombre, horarios, reporteToken: token });
+  return c.json({ id, nombre: body.nombre, horarios, reporteToken: token, reporte: `/r/${token}` });
 });
 
 /** Carga un empleado y le manda el opt-in. */
@@ -146,6 +147,31 @@ admin.post("/recordatorio", async (c) => {
     }
     throw error;
   }
+});
+
+/** Actualiza el bloque de evaluación ergonómica del reporte. */
+admin.post("/ergonomia", async (c) => {
+  const body = await c.req.json<{
+    empresaId?: string;
+    url?: string;
+    enviados?: number;
+    respuestas?: number;
+  }>();
+  const empresa = body.empresaId
+    ? await empresaPorId(c.env, body.empresaId)
+    : await primeraEmpresa(c.env);
+  if (!empresa) return c.json({ error: "empresa no encontrada" }, 404);
+
+  await c.env.DB.prepare(
+    `UPDATE empresas SET form_ergonomia_url = COALESCE(?, form_ergonomia_url),
+                         form_enviados = COALESCE(?, form_enviados),
+                         form_respuestas = COALESCE(?, form_respuestas)
+     WHERE id = ?`,
+  )
+    .bind(body.url ?? null, body.enviados ?? null, body.respuestas ?? null, empresa.id)
+    .run();
+
+  return c.json({ ok: true, empresa: empresa.id });
 });
 
 /**

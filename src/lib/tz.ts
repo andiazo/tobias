@@ -64,6 +64,51 @@ export function tickDe15(hhmm: string): string {
   return `${h}:${String(Math.floor(minuto / 15) * 15).padStart(2, "0")}`;
 }
 
+/** Minutos que la zona va por delante de UTC en ese instante. */
+export function offsetMinutos(instante: Date, tz: string): number {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    })
+      .formatToParts(instante)
+      .map((x) => [x.type, x.value]),
+  ) as Record<string, string>;
+  const hora = p.hour === "24" ? "00" : (p.hour ?? "00");
+  const comoSiFueraUtc = Date.UTC(
+    Number(p.year),
+    Number(p.month) - 1,
+    Number(p.day),
+    Number(hora),
+    Number(p.minute),
+    Number(p.second),
+  );
+  return Math.round((comoSiFueraUtc - instante.getTime()) / 60_000);
+}
+
+/**
+ * Instante UTC en que empieza ese día local. Las pausas guardan `fecha` en
+ * hora local, pero `created_at` va en UTC: sin esto, una molestia reportada
+ * a las 8 de la noche en Bogotá cae en el día UTC siguiente y se sale del rango.
+ */
+export function inicioDelDiaUtc(fecha: string, tz: string): string {
+  const base = Date.parse(`${fecha}T00:00:00Z`);
+  // Dos pasadas: la primera estima el offset, la segunda lo evalúa ya en el
+  // instante correcto (importa en zonas con horario de verano).
+  let t = base - offsetMinutos(new Date(base), tz) * 60_000;
+  t = base - offsetMinutos(new Date(t), tz) * 60_000;
+  return new Date(t).toISOString();
+}
+
+export const finDelDiaUtc = (fecha: string, tz: string): string =>
+  new Date(Date.parse(inicioDelDiaUtc(fecha, tz)) + 86_400_000 - 1).toISOString();
+
 export const ahoraIso = (): string => new Date().toISOString();
 
 export const isoMasMinutos = (minutos: number, desde = new Date()): string =>
