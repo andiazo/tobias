@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { Env } from "./env";
-import { firmaValida, procesarWebhook } from "./webhook";
+import { comparaSegura, firmaValida, procesarWebhook } from "./webhook";
 import { abrirPausa, completarPausa, registrarAvance, reportarMolestia } from "./pages/pausa";
 import { admin } from "./admin";
 import { exportarCsv, verReporte } from "./pages/reporte";
@@ -20,16 +20,26 @@ app.get("/webhook/kapso", (c) => {
 });
 
 app.post("/webhook/kapso", async (c) => {
+  // Dos cerraduras independientes, porque no todas las pasarelas firman igual:
+  //   META_APP_SECRET      verifica X-Hub-Signature-256 (lo ideal).
+  //   WEBHOOK_SECRETO_URL  exige ?k=<secreto> en la URL del webhook.
+  // Con cualquiera de las dos el webhook queda cerrado. Sin ninguna, cualquiera
+  // que conozca la URL puede fabricar eventos y hacer que el Worker escriba.
+  if (c.env.WEBHOOK_SECRETO_URL) {
+    if (!comparaSegura(c.req.query("k") ?? "", c.env.WEBHOOK_SECRETO_URL)) {
+      return c.text("no autorizado", 401);
+    }
+  }
+
   const raw = await c.req.text();
 
-  // Si hay app secret configurado, la firma es obligatoria.
   if (c.env.META_APP_SECRET) {
     const ok = await firmaValida(raw, c.req.header("x-hub-signature-256") ?? null, c.env.META_APP_SECRET);
     if (!ok) return c.text("firma invalida", 401);
-  } else {
-    // Sin app secret cualquiera puede fabricar un evento y hacernos enviar
-    // mensajes. Sirve para arrancar, no para el piloto con datos reales.
-    console.warn("META_APP_SECRET sin configurar: el webhook acepta eventos sin verificar firma");
+  } else if (!c.env.WEBHOOK_SECRETO_URL) {
+    console.warn(
+      "webhook sin autenticar: configura META_APP_SECRET o WEBHOOK_SECRETO_URL antes del piloto",
+    );
   }
 
   let payload: unknown;

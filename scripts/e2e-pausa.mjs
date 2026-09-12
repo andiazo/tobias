@@ -1,6 +1,7 @@
 // M4 y M5 - la rutina guiada y el reporte de molestias.
 import crypto from 'node:crypto';
 const BASE='http://127.0.0.1:8787', MOCK='http://127.0.0.1:8788';
+const LLAVE = process.env.WEBHOOK_LLAVE || 'llave-local';
 const ADMIN='local-admin', SECRET='local-app-secret', TEL='573005554433';
 
 const post = (path, body) => fetch(BASE+'/admin'+path, {
@@ -13,7 +14,7 @@ function webhook(mensaje){
     contacts:[{ profile:{ name:'Luis' }, wa_id:TEL }], messages:[mensaje] }}]}]};
   const raw = JSON.stringify(payload);
   const sig = 'sha256='+crypto.createHmac('sha256', SECRET).update(raw).digest('hex');
-  return fetch(BASE+'/webhook/kapso', { method:'POST', headers:{'content-type':'application/json','x-hub-signature-256':sig}, body:raw });
+  return fetch(BASE+'/webhook/kapso?k='+LLAVE, { method:'POST', headers:{'content-type':'application/json','x-hub-signature-256':sig}, body:raw });
 }
 const texto = (id, body) => ({ id, from:TEL, timestamp:'1', type:'text', text:{ body } });
 const boton = (id, btnId) => ({ id, from:TEL, timestamp:'1', type:'interactive',

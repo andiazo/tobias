@@ -1,6 +1,7 @@
 // M6 - el reporte de evidencia para SST y el CSV.
 import crypto from 'node:crypto';
 const BASE='http://127.0.0.1:8787';
+const LLAVE = process.env.WEBHOOK_LLAVE || 'llave-local';
 const ADMIN='local-admin', SECRET='local-app-secret';
 
 const post = (p,b) => fetch(BASE+'/admin'+p,{method:'POST',
@@ -9,7 +10,7 @@ function wh(tel, mensaje){
   const pl={object:'x',entry:[{id:'1',changes:[{field:'messages',value:{messaging_product:'whatsapp',
     metadata:{phone_number_id:'123456'},contacts:[{wa_id:tel}],messages:[mensaje]}}]}]};
   const raw=JSON.stringify(pl);
-  return fetch(BASE+'/webhook/kapso',{method:'POST',headers:{'content-type':'application/json',
+  return fetch(BASE+'/webhook/kapso?k='+LLAVE,{method:'POST',headers:{'content-type':'application/json',
     'x-hub-signature-256':'sha256='+crypto.createHmac('sha256',SECRET).update(raw).digest('hex')},body:raw});
 }
 const txt=(tel,id,b)=>wh(tel,{id,from:tel,timestamp:'1',type:'text',text:{body:b}});

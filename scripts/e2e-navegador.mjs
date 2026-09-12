@@ -6,6 +6,7 @@ import { chromium } from 'playwright';
 import crypto from 'node:crypto';
 
 const BASE='http://127.0.0.1:8787', MOCK='http://127.0.0.1:8788';
+const LLAVE = process.env.WEBHOOK_LLAVE || 'llave-local';
 const ADMIN='local-admin', SECRET='local-app-secret', TEL='573007778899';
 const CAPT = process.env.CAPTURAS || null;
 const captura = (page, n) => (CAPT ? page.screenshot({ path: `${CAPT}/${n}.png` }) : Promise.resolve());
@@ -15,7 +16,7 @@ const post=(p,b)=>fetch(BASE+'/admin'+p,{method:'POST',
 function wh(m){const pl={object:'x',entry:[{id:'1',changes:[{field:'messages',value:{
   messaging_product:'whatsapp',metadata:{phone_number_id:'123456'},contacts:[{wa_id:TEL}],messages:[m]}}]}]};
  const raw=JSON.stringify(pl);
- return fetch(BASE+'/webhook/kapso',{method:'POST',headers:{'content-type':'application/json',
+ return fetch(BASE+'/webhook/kapso?k='+LLAVE,{method:'POST',headers:{'content-type':'application/json',
    'x-hub-signature-256':'sha256='+crypto.createHmac('sha256',SECRET).update(raw).digest('hex')},body:raw});}
 const t=(id,b)=>({id,from:TEL,timestamp:'1',type:'text',text:{body:b}});
 const btn=(id,b)=>({id,from:TEL,timestamp:'1',type:'interactive',

@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 const BASE='http://127.0.0.1:8787', MOCK='http://127.0.0.1:8788';
+const LLAVE = process.env.WEBHOOK_LLAVE || 'llave-local';
 const ADMIN='local-admin', SECRET='local-app-secret', TEL='573001112233';
 const j = async (r) => ({ status: r.status, body: await r.text() });
 
@@ -15,7 +16,7 @@ function webhook(mensaje){
     contacts:[{ profile:{ name:'Prueba' }, wa_id:TEL }], messages:[mensaje] }}]}]};
   const raw = JSON.stringify(payload);
   const sig = 'sha256='+crypto.createHmac('sha256', SECRET).update(raw).digest('hex');
-  return fetch(BASE+'/webhook/kapso', { method:'POST', headers:{'content-type':'application/json','x-hub-signature-256':sig}, body:raw });
+  return fetch(BASE+'/webhook/kapso?k='+LLAVE, { method:'POST', headers:{'content-type':'application/json','x-hub-signature-256':sig}, body:raw });
 }
 const texto = (id, body) => ({ id, from:TEL, timestamp:'1', type:'text', text:{ body } });
 const boton = (id, btnId, title) => ({ id, from:TEL, timestamp:'1', type:'interactive',
@@ -30,7 +31,7 @@ const check = (nombre, ok, extra='') => console.log(`${ok?'PASS':'FAIL'}  ${nomb
 await fetch(BASE+'/admin/reset', { method:'POST', headers:{ 'content-type':'application/json', authorization:`Bearer ${ADMIN}` }, body:'{"confirmar":"si"}' });
 
 // 0. firma invalida se rechaza
-const mala = await fetch(BASE+'/webhook/kapso', { method:'POST', headers:{'content-type':'application/json','x-hub-signature-256':'sha256=deadbeef'}, body:'{}' });
+const mala = await fetch(BASE+'/webhook/kapso?k='+LLAVE, { method:'POST', headers:{'content-type':'application/json','x-hub-signature-256':'sha256=deadbeef'}, body:'{}' });
 check('webhook rechaza firma invalida', mala.status===401, 'status '+mala.status);
 
 // 0b. admin sin token
@@ -99,3 +100,13 @@ await pausa(600);
 st = await estado();
 check('SALIR da de baja', !!st.empleado?.baja_at, st.empleado?.baja_at);
 check('recordatorio a un empleado de baja se rechaza', (await post('/recordatorio', { telefono:'+'+TEL, bloque:1 })).status === 409);
+
+// --- segunda cerradura del webhook: ?k=<secreto> ---
+// El worker de pruebas corre con WEBHOOK_SECRETO_URL=llave-local.
+const payloadK = JSON.stringify({ object:'x', entry:[] });
+const firmaK = 'sha256='+crypto.createHmac('sha256', SECRET).update(payloadK).digest('hex');
+const conK = (qs) => fetch(`${BASE}/webhook/kapso${qs}`, { method:'POST',
+  headers:{'content-type':'application/json','x-hub-signature-256':firmaK}, body:payloadK });
+check('sin ?k el webhook rechaza', (await conK('')).status === 401);
+check('con ?k equivocado rechaza', (await conK('?k=otra')).status === 401);
+check('con ?k correcto acepta', (await conK('?k=llave-local')).status === 200);

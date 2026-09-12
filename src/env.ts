@@ -15,6 +15,8 @@ export interface Env {
   // secrets
   KAPSO_API_KEY: string;
   META_APP_SECRET?: string;
+  /** Secreto en la URL del webhook (?k=...), para cuando no hay firma. */
+  WEBHOOK_SECRETO_URL?: string;
   WEBHOOK_VERIFY_TOKEN?: string;
   TOKEN_SECRET: string;
   ADMIN_TOKEN?: string;

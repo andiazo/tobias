@@ -39,6 +39,10 @@ elige plantilla cuando la ventana está cerrada. Mientras estén vacías, un env
 fuera de ventana falla con un error explícito (`PlantillaNoDisponible`) en vez de
 fallar en silencio.
 
+> **¿Vas a desplegar?** [`RUNBOOK.md`](RUNBOOK.md) tiene el paso a paso completo
+> del piloto: qué hacer antes de tocar código, qué considerar para producción y
+> cuánto toma cada bloque.
+
 ## Puesta en marcha
 
 Todo el despliegue en un comando:
@@ -71,6 +75,7 @@ npx wrangler secret put KAPSO_API_KEY        # X-API-Key del proxy de Kapso
 npx wrangler secret put TOKEN_SECRET         # cualquier cadena aleatoria larga
 npx wrangler secret put ADMIN_TOKEN          # protege /admin/*
 npx wrangler secret put WEBHOOK_VERIFY_TOKEN # hub.verify_token del webhook
+npx wrangler secret put WEBHOOK_SECRETO_URL  # ?k= de la URL del webhook
 npx wrangler secret put META_APP_SECRET      # ver aviso abajo
 
 # 3. Completa en wrangler.toml [vars]:
@@ -82,11 +87,12 @@ npm run deploy
 En Kapso, apunta el webhook a `https://<tu-worker>/webhook/kapso`. La ruta responde
 el handshake `GET` con `hub.verify_token`.
 
-> **`META_APP_SECRET` antes del piloto real.** Si no está configurado, el webhook
-> acepta cualquier `POST` sin verificar `X-Hub-Signature-256`: quien conozca la URL
-> puede fabricar un evento y hacer que el Worker envíe mensajes. Está así para
-> poder arrancar sin el app secret de Meta, y el Worker lo avisa en los logs.
-> Configúralo antes de cargar empleados reales.
+> **Cierra el webhook antes del piloto real.** Hay dos cerraduras independientes
+> y basta con una: `META_APP_SECRET` verifica `X-Hub-Signature-256`, y
+> `WEBHOOK_SECRETO_URL` exige `?k=<secreto>` en la URL. Sin ninguna de las dos,
+> quien conozca la URL puede fabricar eventos y hacer que el Worker envíe
+> mensajes; el Worker lo avisa en los logs. El `?k=` existe porque no está
+> confirmado que Kapso reenvíe la firma de Meta — ver `RUNBOOK.md`.
 
 ## Probar
 
