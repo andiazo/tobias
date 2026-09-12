@@ -3,14 +3,18 @@
 Lo que te toca a ti, en orden, para pasar de este repo a 20 personas haciendo
 pausas activas. Escrito para seguirse de arriba abajo.
 
-**Tiempo de manos a la obra: ~1 hora** si nada sorprende. Presupuesta media
-jornada la primera vez, por los dos puntos ciegos del bloque 0.
+También está como checklist con progreso guardado:
+https://claude.ai/code/artifact/c88fb45d-ca52-4a16-93ce-8a71951ca735
+
+**Tiempo de manos a la obra: ~1 h 45 min**, o 2 h 15 contando el ensayo en seco.
+Presupuesta media jornada la primera vez, por los dos puntos ciegos: si Kapso
+reenvía la firma de Meta, y si el `phone_number_id` es el correcto.
 La aprobación de plantillas de Meta son 2–24 h de espera de calendario, no de
 trabajo tuyo, y por eso va primero.
 
 ---
 
-## Bloque 0 · Hoy, antes de tocar código (~20 min)
+## Bloque 0 · Hoy, antes de tocar código (~30 min)
 
 ### 0.1 Rota las credenciales que pegaste en el chat · 2 min
 El token de Cloudflare y la API key de Kapso quedaron en el historial de una
@@ -95,7 +99,7 @@ curl https://<tu-worker>.workers.dev/health
 
 ---
 
-## Bloque 2 · Conectar Kapso (~10 min)
+## Bloque 2 · Conectar Kapso (~20 min)
 
 En Kapso, apunta el webhook a la URL **completa con el `?k=`**:
 
@@ -262,13 +266,13 @@ empleados de ambas le escriben al mismo contacto.
 
 | Bloque | Tuyo | Espera |
 |---|---|---|
-| 0 · Rotar, plantillas, plan, Form | 20 min | 2–24 h (Meta) |
+| 0 · Rotar, plantillas, plan, Form | 30 min | 2–24 h (Meta) |
 | 1 · Desplegar | 20 min | — |
-| 2 · Kapso + firma del webhook | 10–20 min | — |
+| 2 · Kapso + firma del webhook | 20 min | — |
 | 3 · Prueba de humo | 15 min | — |
-| 4 · Modo prueba, CSV, ergonomía | 15 min | — |
+| 4 · Modo prueba, CSV, ergonomía | 20 min | — |
 | Ensayo en seco con 3 internos | 30 min | 1 día |
-| **Total de manos a la obra** | **~1 h 40 min** | |
+| **Total de manos a la obra** | **2 h 15 min** | ≈ 2 días de calendario |
 
-Camino más corto a "funcionando con tu celular": **bloques 1 a 3, unos 45
+Camino más corto a "funcionando con tu celular": **bloques 1 a 3, unos 55
 minutos.** El resto es lo que separa una demo de un piloto.
