@@ -26,6 +26,9 @@ const enviados = async () => (await (await fetch(MOCK+'/__enviados')).json());
 const pausa = (ms) => new Promise(r => setTimeout(r, ms));
 const check = (nombre, ok, extra='') => console.log(`${ok?'PASS':'FAIL'}  ${nombre}${extra?' — '+extra:''}`);
 
+// Base limpia: el suite se puede correr las veces que haga falta.
+await fetch(BASE+'/admin/reset', { method:'POST', headers:{ 'content-type':'application/json', authorization:`Bearer ${ADMIN}` }, body:'{"confirmar":"si"}' });
+
 // 0. firma invalida se rechaza
 const mala = await fetch(BASE+'/webhook/kapso', { method:'POST', headers:{'content-type':'application/json','x-hub-signature-256':'sha256=deadbeef'}, body:'{}' });
 check('webhook rechaza firma invalida', mala.status===401, 'status '+mala.status);

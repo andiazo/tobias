@@ -3,7 +3,7 @@ import type { Env } from "./env";
 import { firmaValida, procesarWebhook } from "./webhook";
 import { abrirPausa, completarPausa } from "./pages/pausa";
 import { admin } from "./admin";
-import { barrerPausasVencidas } from "./db/queries";
+import { correrTick } from "./scheduled";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -51,10 +51,9 @@ app.route("/admin", admin);
 export default {
   fetch: app.fetch,
 
-  // M3 (parcial): por ahora el cron solo cierra las pausas vencidas.
-  // La programacion de recordatorios por horario entra con el resto de M3.
+  // M3: cada 15 min programa los recordatorios del tick y cierra los vencidos.
   async scheduled(_evento: ScheduledController, env: Env): Promise<void> {
-    const cerradas = await barrerPausasVencidas(env);
-    if (cerradas > 0) console.log(`cron: ${cerradas} pausas marcadas no_realizada`);
+    const resumen = await correrTick(env);
+    console.log("cron:", JSON.stringify(resumen));
   },
 } satisfies ExportedHandler<Env>;

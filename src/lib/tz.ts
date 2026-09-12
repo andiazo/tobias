@@ -53,6 +53,17 @@ export const esMultiploDe15 = (hhmm: string): boolean => {
   return Number(m[2]) % 15 === 0;
 };
 
+/**
+ * Baja una hora local al tick de 15 min que le corresponde.
+ * El cron no dispara exacto: si llega a las 10:01 el bloque sigue siendo 10:00.
+ */
+export function tickDe15(hhmm: string): string {
+  const [h, m] = hhmm.split(":");
+  const minuto = Number(m ?? 0);
+  if (!Number.isFinite(minuto)) return hhmm;
+  return `${h}:${String(Math.floor(minuto / 15) * 15).padStart(2, "0")}`;
+}
+
 export const ahoraIso = (): string => new Date().toISOString();
 
 export const isoMasMinutos = (minutos: number, desde = new Date()): string =>

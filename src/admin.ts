@@ -3,8 +3,10 @@
 // Todas exigen el header Authorization: Bearer <ADMIN_TOKEN>.
 import { Hono } from "hono";
 import type { Env } from "./env";
+import { modoPrueba } from "./env";
 import {
   crearEmpleado,
+  registrarConsentimiento,
   crearPausa,
   empleadoPorTelefono,
   marcarPausaEnviada,
@@ -16,6 +18,7 @@ import { enviarOptin, enviarRecordatorio, PlantillaNoDisponible } from "./whatsa
 import { ahoraIso, enZona, esMultiploDe15 } from "./lib/tz";
 import { tokenDeReporte } from "./lib/tokens";
 import { ventanaAbierta } from "./whatsapp/ventana";
+import { correrTick } from "./scheduled";
 
 export const admin = new Hono<{ Bindings: Env }>();
 
@@ -143,6 +146,50 @@ admin.post("/recordatorio", async (c) => {
     }
     throw error;
   }
+});
+
+/**
+ * Borra todos los datos. Solo con MODO_PRUEBA y exige {"confirmar":"si"}:
+ * es lo que deja correr el suite local de forma repetible.
+ */
+admin.post("/reset", async (c) => {
+  if (!modoPrueba(c.env)) return c.json({ error: "solo disponible con MODO_PRUEBA" }, 403);
+  const body = await c.req.json<{ confirmar?: string }>().catch(() => ({}) as { confirmar?: string });
+  if (body.confirmar !== "si") return c.json({ error: 'falta {"confirmar":"si"}' }, 400);
+
+  // El orden respeta las llaves foraneas.
+  const tablas = ["molestias", "pausas", "eventos", "mensajes_procesados", "empleados", "empresas"];
+  await c.env.DB.batch(tablas.map((t) => c.env.DB.prepare(`DELETE FROM ${t}`)));
+  return c.json({ ok: true, tablas });
+});
+
+/**
+ * Marca el consentimiento a mano. Es solo para pruebas: el consentimiento real
+ * lo da el empleado tocando el boton del opt-in, y por eso solo existe con
+ * MODO_PRUEBA encendido.
+ */
+admin.post("/consentimiento", async (c) => {
+  if (!modoPrueba(c.env)) return c.json({ error: "solo disponible con MODO_PRUEBA" }, 403);
+  const body = await c.req.json<{ telefono?: string }>();
+  if (!body.telefono) return c.json({ error: "falta telefono" }, 400);
+
+  const empleado = await empleadoPorTelefono(c.env, body.telefono);
+  if (!empleado) return c.json({ error: "empleado no encontrado" }, 404);
+
+  await registrarConsentimiento(c.env, empleado.id);
+  await registrarEvento(c.env, "consentimiento_manual", empleado.id, { origen: "admin" });
+  return c.json({ ok: true, empleado: empleado.id });
+});
+
+/**
+ * Corre un tick del cron a demanda. `ahora` permite simular otra hora para
+ * probar los horarios sin esperar al reloj.
+ */
+admin.post("/tick", async (c) => {
+  const body = await c.req.json<{ ahora?: string }>().catch(() => ({}) as { ahora?: string });
+  const ahora = body.ahora ? new Date(body.ahora) : new Date();
+  if (Number.isNaN(ahora.getTime())) return c.json({ error: "fecha invalida en 'ahora'" }, 400);
+  return c.json(await correrTick(c.env, ahora));
 });
 
 /** Estado de un empleado: consentimiento, ventana y ultimos eventos. */
