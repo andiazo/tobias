@@ -14,7 +14,9 @@
     "tail": "wrangler tail",
     "test:local": "node scripts/e2e-local.mjs",
     "mock:kapso": "node scripts/mock-kapso.mjs",
-    "test:cron": "node scripts/e2e-cron.mjs"
+    "test:cron": "node scripts/e2e-cron.mjs",
+    "test:pausa": "node scripts/e2e-pausa.mjs",
+    "test:navegador": "node scripts/e2e-navegador.mjs"
   },
   "dependencies": {
     "@kapso/whatsapp-cloud-api": "^0.3.0",
@@ -22,6 +24,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260911.1",
+    "playwright": "^1.63.0",
     "typescript": "^5.7.3",
     "wrangler": "^4.0.0"
   }

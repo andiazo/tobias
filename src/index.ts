@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { Env } from "./env";
 import { firmaValida, procesarWebhook } from "./webhook";
-import { abrirPausa, completarPausa } from "./pages/pausa";
+import { abrirPausa, completarPausa, registrarAvance, reportarMolestia } from "./pages/pausa";
 import { admin } from "./admin";
 import { correrTick } from "./scheduled";
 
@@ -45,6 +45,8 @@ app.post("/webhook/kapso", async (c) => {
 
 app.get("/p/:token", (c) => abrirPausa(c.env, c.req.param("token")));
 app.post("/p/:token/done", (c) => completarPausa(c.env, c.req.param("token")));
+app.post("/p/:token/avance", (c) => registrarAvance(c.env, c.req.param("token"), c.req.raw));
+app.post("/p/:token/molestia", (c) => reportarMolestia(c.env, c.req.param("token"), c.req.raw));
 
 app.route("/admin", admin);
 

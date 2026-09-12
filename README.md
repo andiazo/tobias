@@ -14,9 +14,9 @@ falta para cerrar un ciclo completo de punta a punta.
 | M0 · Infra y modelo de datos | completo — 5 tablas, 4 índices, `/health`, cron `*/15` |
 | M1 · Canal WhatsApp | completo — envío, webhook con firma, ventana de 24 h, log de eventos |
 | M2 · Consentimiento | opt-in, `SALIR` y reingreso funcionando; falta el seed por CSV |
-| M3 · Cron | el barrido de vencidas corre; falta programar por horario |
-| M4 · Webapp de la pausa | esqueleto: valida token, marca `iniciada` y `completada`. Faltan los 6 ejercicios |
-| M5 · Molestias | pendiente |
+| M3 · Cron | completo — programa por horario, días hábiles, idempotente, barre vencidas |
+| M4 · Webapp de la pausa | completo — 6 ejercicios, cronómetro, barra, saltar, `sendBeacon` |
+| M5 · Molestias | completo — 6 zonas, comentario ≤200, confirmación por WhatsApp |
 | M6 · Reporte SST | pendiente |
 | M7 · Plantillas Meta | pendiente (trabajo externo) |
 
@@ -120,8 +120,17 @@ npx wrangler dev --port 8787 --local \
   --var KAPSO_BASE_URL:http://127.0.0.1:8788 \
   --var WHATSAPP_PHONE_NUMBER_ID:123456 \
   --var PUBLIC_BASE_URL:http://127.0.0.1:8787 &
-npm run test:local
+
+npm run test:local      # canal: firma, alta, ventana, opt-in, SALIR
+npm run test:cron       # horarios, días hábiles, idempotencia, barrido
+npm run test:pausa      # rutina, sendBeacon, molestias
+npm run test:navegador  # lo mismo en Chromium a 390px de ancho
 ```
+
+Cada suite limpia la base al arrancar (`POST /admin/reset`, solo con
+`MODO_PRUEBA`), así que se pueden correr en cualquier orden y las veces que
+haga falta. `test:navegador` acepta `CHROMIUM=<ruta>` si Playwright no
+encuentra el binario, y `CAPTURAS=<dir>` para guardar pantallazos.
 
 Necesita `.dev.vars` (copia `.dev.vars.example`) con los valores que usa el test:
 `ADMIN_TOKEN=local-admin`, `META_APP_SECRET=local-app-secret`,
@@ -136,9 +145,14 @@ Necesita `.dev.vars` (copia `.dev.vars.example`) con los valores que usa el test
 | `POST /webhook/kapso` | eventos entrantes: firma, log y router |
 | `GET /p/:token` | rutina de la pausa (token HMAC, expira en 60 min) |
 | `POST /p/:token/done` | marca la pausa completada |
+| `POST /p/:token/avance` | `sendBeacon` al cerrar: hasta qué ejercicio llegó |
+| `POST /p/:token/molestia` | reporta molestia y confirma por WhatsApp |
 | `POST /admin/empresa` | crea la empresa del piloto |
 | `POST /admin/empleado` | carga un empleado y le manda el opt-in |
 | `POST /admin/recordatorio` | dispara un recordatorio sin esperar al cron |
+| `POST /admin/tick` | corre un tick del cron, con `ahora` opcional para simular |
+| `POST /admin/consentimiento` | marca consentimiento a mano (solo `MODO_PRUEBA`) |
+| `POST /admin/reset` | borra todos los datos (solo `MODO_PRUEBA`) |
 | `GET /admin/estado` | consentimiento, ventana, pausas y últimos eventos |
 
 Las rutas `/admin/*` exigen `Authorization: Bearer $ADMIN_TOKEN`.
@@ -155,3 +169,9 @@ Las rutas `/admin/*` exigen `Authorization: Bearer $ADMIN_TOKEN`.
 - **Respuesta rápida al webhook.** Se responde `200` y el trabajo va en
   `waitUntil`, para que Meta no reintente por lentitud.
 - **Tokens.** HMAC-SHA256 con WebCrypto. Sin sesiones, sin cookies, sin login.
+- **Tick de 15 min.** El cron no dispara exacto, así que la hora local se redondea
+  hacia abajo al múltiplo de 15: si llega a las 10:07, el bloque sigue siendo el
+  de las 10:00.
+- **Ilustraciones en línea.** Los 6 SVG viajan dentro del HTML en vez de servirse
+  como assets. Son menos de 1 KB cada uno; como archivos sueltos costarían 6
+  peticiones extra en una conexión móvil. Por eso no hay binding de Static Assets.

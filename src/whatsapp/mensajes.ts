@@ -110,8 +110,8 @@ export async function enviarPlantilla(
 
 const TEXTO_OPTIN =
   "Hola {nombre}. {empresa} activa su programa de pausas activas por WhatsApp.\n\n" +
-  "Te vamos a escribir 3 veces al dia, en dias habiles, con una rutina de 3 minutos.\n\n" +
-  "Guardamos solo tu participacion (si hiciste la pausa) y las molestias que reportes, " +
+  "Te vamos a escribir 3 veces al día, en días hábiles, con una rutina de 3 minutos.\n\n" +
+  "Guardamos solo tu participación (si hiciste la pausa) y las molestias que reportes, " +
   "para la evidencia del SG-SST de la empresa. Puedes escribir SALIR cuando quieras y dejamos de escribirte.";
 
 /** M2: opt-in. Libre si la ventana esta abierta; si no, plantilla. */
@@ -125,7 +125,7 @@ export async function enviarOptin(
 
   if (canal === "libre") {
     const wamid = await enviarBotones(env, empleado.telefono_e164, cuerpo, [
-      { id: BOTON.optinSi, title: "Si, participo" },
+      { id: BOTON.optinSi, title: "Sí, participo" },
       { id: BOTON.optinNo, title: "No, gracias" },
     ]);
     return { canal, wamid };

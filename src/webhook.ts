@@ -171,7 +171,7 @@ async function manejarBoton(
       await enviarTexto(
         env,
         empleado.telefono_e164,
-        "Listo, quedaste inscrito. Te escribimos en tu proxima pausa programada. " +
+        "Listo, quedaste inscrito. Te escribimos en tu próxima pausa programada. " +
           "Escribe SALIR cuando quieras si prefieres no seguir.",
       );
       return;
@@ -181,7 +181,7 @@ async function manejarBoton(
       await enviarTexto(
         env,
         empleado.telefono_e164,
-        "Entendido, no te vamos a escribir. Si cambias de opinion, escribe PAUSAS.",
+        "Entendido, no te vamos a escribir. Si cambias de opinión, escribe PAUSAS.",
       );
       return;
     }
@@ -235,7 +235,7 @@ async function manejarTexto(
   await enviarTexto(
     env,
     empleado.telefono_e164,
-    "Estas inscrito en el programa de pausas activas. Te escribimos en tus horarios programados. " +
+    "Estás inscrito en el programa de pausas activas. Te escribimos en tus horarios programados. " +
       "Escribe SALIR para darte de baja.",
   );
 }

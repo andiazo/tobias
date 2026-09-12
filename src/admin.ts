@@ -212,12 +212,19 @@ admin.get("/estado", async (c) => {
     .bind(empleado.id)
     .all();
 
+  const molestias = await c.env.DB.prepare(
+    "SELECT zona, comentario, created_at FROM molestias WHERE empleado_id = ? ORDER BY created_at DESC LIMIT 10",
+  )
+    .bind(empleado.id)
+    .all();
+
   return c.json({
     empleado: {
       ...empleado,
       ventana_abierta: ventanaAbierta(empleado),
     },
     pausas: pausas.results,
+    molestias: molestias.results,
     eventos: eventos.results,
   });
 });
