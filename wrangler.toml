@@ -24,6 +24,10 @@ PUBLIC_BASE_URL = ""
 # automaticamente como empleado de la empresa demo y recibe el opt-in.
 # Apagar antes del piloto real.
 MODO_PRUEBA = "true"
+# El servidor no acepta una pausa "completada" antes de este tiempo desde que
+# se abrio la rutina. La rutina dura 180 s; 120 deja margen para saltar un
+# ejercicio sin permitir que alguien la despache en tres toques.
+SEGUNDOS_MINIMOS_PAUSA = "120"
 # Nombres de las plantillas aprobadas por Meta (M7). Vacios = solo mensajes
 # libres dentro de la ventana de 24 h, que es el modo de prueba actual.
 PLANTILLA_OPTIN = ""

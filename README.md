@@ -15,7 +15,7 @@ falta para cerrar un ciclo completo de punta a punta.
 | M1 · Canal WhatsApp | completo — envío, webhook con firma, ventana de 24 h, log de eventos |
 | M2 · Consentimiento | completo — opt-in, `SALIR`, reingreso y carga por CSV |
 | M3 · Cron | completo — programa por horario, días hábiles, idempotente, barre vencidas |
-| M4 · Webapp de la pausa | completo — 6 ejercicios, cronómetro, barra, saltar, `sendBeacon` |
+| M4 · Webapp de la pausa | completo — 6 ejercicios, cronómetro, celebración, XP, `sendBeacon` |
 | M5 · Molestias | completo — 6 zonas, comentario ≤200, confirmación por WhatsApp |
 | M6 · Reporte SST | completo — HTML sin login, CSV fechado, filtro por rango |
 | M7 · Plantillas Meta | pendiente — trabajo externo, no hay código que escribir |
@@ -179,6 +179,11 @@ Necesita `.dev.vars` (copia `.dev.vars.example`) con los valores que usa el test
 | `POST /admin/consentimiento` | marca consentimiento a mano (solo `MODO_PRUEBA`) |
 | `POST /admin/ergonomia` | link del Form y conteo de respuestas |
 | `POST /admin/reset` | borra todos los datos (solo `MODO_PRUEBA`) |
+
+Para correr los tests en local hay que bajar el mínimo de duración, o las
+pausas de prueba nunca se completan:
+`npx wrangler dev --var SEGUNDOS_MINIMOS_PAUSA:3 …` (ya está en el comando de
+arriba).
 | `GET /admin/estado` | consentimiento, ventana, pausas y últimos eventos |
 
 Las rutas `/admin/*` exigen `Authorization: Bearer $ADMIN_TOKEN`.
@@ -195,6 +200,17 @@ Las rutas `/admin/*` exigen `Authorization: Bearer $ADMIN_TOKEN`.
 - **Respuesta rápida al webhook.** Se responde `200` y el trabajo va en
   `waitUntil`, para que Meta no reintente por lentitud.
 - **Tokens.** HMAC-SHA256 con WebCrypto. Sin sesiones, sin cookies, sin login.
+- **Duración mínima, verificada en el servidor.** `POST /p/:token/done` solo marca
+  `completada` si pasaron al menos `SEGUNDOS_MINIMOS_PAUSA` (120 por defecto)
+  desde que se abrió la rutina. Sin esto, tocar "Saltar" seis veces dejaba la
+  pausa como completada y la columna del cronómetro no valía como evidencia.
+  El intento queda en `eventos` como `pausa_demasiado_rapida`.
+- **Gamificación acotada a la sesión.** Progreso, celebración, XP y bono por no
+  saltarse ninguno viven dentro de la rutina y se pierden al cerrarla. No hay
+  rachas entre días ni ranking entre empleados: eso es lo que el PRD excluye
+  por inflar la adherencia del piloto y contaminar la métrica del día 5.
+- **Sonido apagado por defecto.** Esto se abre en una oficina abierta. El
+  empleado lo enciende si quiere y la decisión queda en `localStorage`.
 - **Tick de 15 min.** El cron no dispara exacto, así que la hora local se redondea
   hacia abajo al múltiplo de 15: si llega a las 10:07, el bloque sigue siendo el
   de las 10:00.

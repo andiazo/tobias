@@ -43,8 +43,11 @@ check('la pagina responde 200', r.status===200);
 check('no se cachea', (r.headers.get('cache-control')||'').includes('no-store'));
 for (const zona of ['Cuello','Hombros','Muñecas','Espalda alta','Ojos','Piernas'])
   check(`incluye el ejercicio de ${zona.toLowerCase()}`, pagina.includes(zona));
-check('trae 6 ilustraciones SVG', (pagina.match(/<svg /g)||[]).length === 6,
-  String((pagina.match(/<svg /g)||[]).length));
+// Los SVG del personaje y del cronometro tambien cuentan, asi que se buscan
+// solo los del viewBox de los ejercicios.
+check('trae 6 ilustraciones de ejercicio',
+  (pagina.match(/viewBox=\\"0 0 200 170\\"/g)||[]).length === 6,
+  String((pagina.match(/viewBox=\\"0 0 200 170\\"/g)||[]).length));
 check('ninguna instruccion pasa de 12 palabras',
   [...pagina.matchAll(/"instruccion":"([^"]+)"/g)].every(m => m[1].split(/\s+/).length <= 12));
 check('la rutina dura 180 s', [...pagina.matchAll(/"segundos":(\d+)/g)].reduce((t,m)=>t+ +m[1],0) === 180);
@@ -57,7 +60,19 @@ check('el beacon registra hasta donde llego', !!ev && JSON.parse(ev.payload).eje
 check('...y la pausa sigue sin completarse', (await estado()).pausas[0]?.estado === 'iniciada');
 
 // --- completar ---
-check('POST /done responde ok', (await fetch(url+'/done',{method:'POST'})).status===200);
+// El servidor no acepta una pausa despachada en segundos: saltar los seis
+// ejercicios a toques no puede valer como evidencia.
+const rapido = await (await fetch(url+'/done',{method:'POST'})).json();
+check('rechaza completarla demasiado rapido', rapido.ok===false && rapido.motivo==='muy_rapido',
+  JSON.stringify(rapido));
+check('y la deja en iniciada', (await estado()).pausas[0]?.estado === 'iniciada');
+const evRapido = (await estado()).eventos.find(e=>e.tipo==='pausa_demasiado_rapida');
+check('deja constancia del intento', !!evRapido);
+
+// Pasado el minimo (3 s en local, 120 s en produccion) si cuenta.
+await espera(3200);
+const lento = await fetch(url+'/done',{method:'POST'});
+check('POST /done responde ok pasado el minimo', lento.status===200);
 check('la pausa queda completada', (await estado()).pausas[0]?.estado === 'completada');
 
 // --- molestia ---

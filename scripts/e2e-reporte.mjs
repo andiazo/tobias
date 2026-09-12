@@ -57,7 +57,13 @@ for (const [tel, completar] of [[A,2],[B,0]]) {
       // El link llega por WhatsApp; aquí lo reconstruimos desde el mock.
       const env = await (await fetch('http://127.0.0.1:8788/__enviados')).json();
       const url = env.at(-1)?.payload?.interactive?.action?.parameters?.url;
-      if (url) { await fetch(url); await fetch(url+'/done',{method:'POST'}); hechas++; }
+      if (url) {
+        await fetch(url);
+        // El servidor no acepta una pausa despachada en segundos.
+        await espera(3200);
+        const d = await (await fetch(url+'/done',{method:'POST'})).json();
+        if (d.ok) hechas++;
+      }
     }
   }
 }
@@ -71,6 +77,7 @@ await btn(A,'mol.1',bsA[0].reply.id); await espera(300);
 const urlMol = (await (await fetch('http://127.0.0.1:8788/__enviados')).json())
   .at(-1).payload.interactive.action.parameters.url;
 await fetch(urlMol);
+await espera(3200);
 await fetch(urlMol+'/done',{method:'POST'});
 const mol = await fetch(urlMol+'/molestia',{method:'POST',
   headers:{'content-type':'application/json'},

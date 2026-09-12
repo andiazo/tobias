@@ -82,6 +82,9 @@ const pagina = await fetch(url);
 check('la pagina de la pausa abre', pagina.status === 200);
 st = await estado();
 check('pausa queda iniciada', st.pausas?.[0]?.estado === 'iniciada', st.pausas?.[0]?.estado);
+// El servidor exige un minimo de tiempo desde que se abrio la rutina
+// (SEGUNDOS_MINIMOS_PAUSA: 3 s en local, 120 en produccion).
+await pausa(3200);
 const done = await fetch(url + '/done', { method:'POST' });
 check('POST /done responde ok', done.status === 200);
 st = await estado();

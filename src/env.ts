@@ -6,6 +6,8 @@ export interface Env {
   WHATSAPP_PHONE_NUMBER_ID: string;
   PUBLIC_BASE_URL: string;
   MODO_PRUEBA: string;
+  /** Segundos minimos entre abrir la rutina y marcarla completada. */
+  SEGUNDOS_MINIMOS_PAUSA?: string;
   /** Nombres de las plantillas aprobadas en Meta. Vacios mientras no existan. */
   PLANTILLA_OPTIN?: string;
   PLANTILLA_RECORDATORIO?: string;
