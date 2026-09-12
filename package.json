@@ -9,15 +9,14 @@
     "typecheck": "tsc --noEmit",
     "db:migrate:local": "wrangler d1 migrations apply pausas-activas --local",
     "db:migrate": "wrangler d1 migrations apply pausas-activas --remote",
-    "seed:empresa": "wrangler d1 execute pausas-activas --remote --file=./scripts/seed-empresa.sql",
-    "seed:empresa:local": "wrangler d1 execute pausas-activas --local --file=./scripts/seed-empresa.sql",
     "tail": "wrangler tail",
     "test:local": "node scripts/e2e-local.mjs",
     "mock:kapso": "node scripts/mock-kapso.mjs",
     "test:cron": "node scripts/e2e-cron.mjs",
     "test:pausa": "node scripts/e2e-pausa.mjs",
     "test:navegador": "node scripts/e2e-navegador.mjs",
-    "test:reporte": "node scripts/e2e-reporte.mjs"
+    "test:reporte": "node scripts/e2e-reporte.mjs",
+    "seed:empleados": "node scripts/seed-empleados.mjs"
   },
   "dependencies": {
     "@kapso/whatsapp-cloud-api": "^0.3.0",

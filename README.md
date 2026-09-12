@@ -13,12 +13,15 @@ falta para cerrar un ciclo completo de punta a punta.
 |---|---|
 | M0 · Infra y modelo de datos | completo — 5 tablas, 4 índices, `/health`, cron `*/15` |
 | M1 · Canal WhatsApp | completo — envío, webhook con firma, ventana de 24 h, log de eventos |
-| M2 · Consentimiento | opt-in, `SALIR` y reingreso funcionando; falta el seed por CSV |
+| M2 · Consentimiento | completo — opt-in, `SALIR`, reingreso y carga por CSV |
 | M3 · Cron | completo — programa por horario, días hábiles, idempotente, barre vencidas |
 | M4 · Webapp de la pausa | completo — 6 ejercicios, cronómetro, barra, saltar, `sendBeacon` |
 | M5 · Molestias | completo — 6 zonas, comentario ≤200, confirmación por WhatsApp |
 | M6 · Reporte SST | completo — HTML sin login, CSV fechado, filtro por rango |
-| M7 · Plantillas Meta | pendiente (trabajo externo) |
+| M7 · Plantillas Meta | pendiente — trabajo externo, no hay código que escribir |
+
+Lo único que falta del MVP es M7: enviar las 2 plantillas a aprobación de Meta,
+crear el Google Form y hacer el ensayo en seco. Nada de eso es código.
 
 ## Modo prueba: sin plantillas aprobadas
 
@@ -105,6 +108,25 @@ curl -X POST https://<worker>/admin/recordatorio \
 curl "https://<worker>/admin/estado?telefono=%2B57300XXXXXXX" \
   -H "authorization: Bearer $ADMIN_TOKEN"
 ```
+
+### Cargar empleados desde el CSV de RR.HH.
+
+```bash
+BASE_URL=https://<worker> ADMIN_TOKEN=... \
+  npm run seed:empleados -- empleados.csv
+```
+
+El CSV necesita encabezado con `nombre`, `cedula`, `telefono` y `area` (acepta
+los sinónimos habituales de un export de RR.HH.: `celular`, `documento`,
+`dependencia`…). Normaliza a E.164 asumiendo +57 cuando faltan indicativos,
+rechaza las filas sin nombre o con teléfono inválido sin abortar el resto, avisa
+de los repetidos y es idempotente por teléfono: volver a correrlo no duplica.
+Con `--sin-optin` carga sin enviar nada, para revisar antes de escribirle a nadie.
+
+Mientras no haya plantillas aprobadas, el opt-in de una carga por CSV **no puede
+salir**: la ventana de esos números está cerrada. El script lo dice fila por fila
+en vez de fallar en silencio. Hasta entonces, el empleado tiene que escribir
+primero.
 
 ### Ciclo completo en local, sin gastar mensajes
 

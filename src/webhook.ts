@@ -7,6 +7,7 @@ import {
   crearEmpleado,
   empleadoPorTelefono,
   marcarMensajeProcesado,
+  marcarOptinEnviado,
   marcarPausaConfirmada,
   marcarPausaPospuesta,
   pausaAbiertaDelEmpleado,
@@ -233,6 +234,7 @@ async function manejarTexto(
   // Sin consentimiento todavia: cualquier mensaje dispara (o repite) el opt-in.
   if (!empleado.consentimiento_at || empleado.baja_at) {
     const { canal } = await enviarOptin(env, empleado, empresa.nombre);
+    await marcarOptinEnviado(env, empleado.id);
     await registrarEvento(env, "optin_enviado", empleado.id, { canal, disparo: "mensaje_entrante" });
     return;
   }

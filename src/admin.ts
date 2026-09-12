@@ -7,6 +7,7 @@ import { modoPrueba } from "./env";
 import {
   crearEmpleado,
   empresaPorId,
+  marcarOptinEnviado,
   registrarConsentimiento,
   crearPausa,
   empleadoPorTelefono,
@@ -102,6 +103,7 @@ admin.post("/empleado", async (c) => {
 
   try {
     const { canal } = await enviarOptin(c.env, empleado, empresa.nombre);
+    await marcarOptinEnviado(c.env, empleado.id);
     await registrarEvento(c.env, "optin_enviado", empleado.id, { canal, disparo: "admin" });
     return c.json({ empleado, optin: { enviado: true, canal } });
   } catch (error) {
