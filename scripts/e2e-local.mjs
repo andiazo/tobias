@@ -110,3 +110,15 @@ const conK = (qs) => fetch(`${BASE}/webhook/kapso${qs}`, { method:'POST',
 check('sin ?k el webhook rechaza', (await conK('')).status === 401);
 check('con ?k equivocado rechaza', (await conK('?k=otra')).status === 401);
 check('con ?k correcto acepta', (await conK('?k=llave-local')).status === 200);
+
+// --- plantillas: el payload de cada boton tiene que viajar ---
+// Sin el, tocar un boton de plantilla llega como texto y no enruta.
+const TELP = '573001119999';
+await post('/empleado', { telefono:'+'+TELP, nombre:'Fuera de ventana', enviarOptin:false });
+const antesP = (await enviados()).length;
+const conPlantilla = await fetch(`${BASE}/admin/empleado`, { method:'POST',
+  headers:{'content-type':'application/json', authorization:`Bearer ${ADMIN}`},
+  body: JSON.stringify({ telefono:'+'+TELP, nombre:'Fuera de ventana' }) });
+check('sin ventana ni plantilla configurada, avisa en vez de fallar en silencio',
+  conPlantilla.status === 409, String(conPlantilla.status));
+check('y no manda nada', (await enviados()).length === antesP);

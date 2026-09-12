@@ -79,28 +79,46 @@ export async function enviarBotonUrl(
   return r.messages?.[0]?.id ?? "";
 }
 
+/**
+ * Envia una plantilla aprobada.
+ *
+ * Los botones de respuesta rapida NO heredan un identificador de la plantilla:
+ * cada uno viaja como su propio componente, con su indice y su payload, y ese
+ * payload es lo unico que vuelve en el webhook. Sin el, tocar un boton de
+ * plantilla llega como texto del boton y el router no sabe que hacer con el.
+ */
 export async function enviarPlantilla(
   env: Env,
   telefono: string,
   nombre: string,
   variables: string[],
+  botones: string[] = [],
 ): Promise<string> {
+  const componentes: { type: string; [k: string]: unknown }[] = [];
+
+  if (variables.length) {
+    componentes.push({
+      type: "body",
+      parameters: variables.map((text) => ({ type: "text", text })),
+    });
+  }
+
+  botones.forEach((payload, index) => {
+    componentes.push({
+      type: "button",
+      sub_type: "quick_reply",
+      index,
+      parameters: [{ type: "payload", payload }],
+    });
+  });
+
   const r = await clienteKapso(env).messages.sendTemplate({
     phoneNumberId: phoneNumberId(env),
     to: telefono,
     template: {
       name: nombre,
       language: { code: "es_CO" },
-      ...(variables.length
-        ? {
-            components: [
-              {
-                type: "body",
-                parameters: variables.map((text) => ({ type: "text", text })),
-              },
-            ],
-          }
-        : {}),
+      ...(componentes.length ? { components: componentes } : {}),
     },
   });
   return r.messages?.[0]?.id ?? "";
@@ -133,10 +151,13 @@ export async function enviarOptin(
 
   const plantilla = nombrePlantilla(env, "optin");
   if (!plantilla) throw new PlantillaNoDisponible("optin_programa_pausas");
-  const wamid = await enviarPlantilla(env, empleado.telefono_e164, plantilla, [
-    empleado.nombre,
-    empresa,
-  ]);
+  const wamid = await enviarPlantilla(
+    env,
+    empleado.telefono_e164,
+    plantilla,
+    [empleado.nombre, empresa],
+    [BOTON.optinSi, BOTON.optinNo],
+  );
   return { canal, wamid };
 }
 
@@ -163,11 +184,13 @@ export async function enviarRecordatorio(
 
   const plantilla = nombrePlantilla(env, "recordatorio");
   if (!plantilla) throw new PlantillaNoDisponible("recordatorio_pausa");
-  const wamid = await enviarPlantilla(env, empleado.telefono_e164, plantilla, [
-    empleado.nombre,
-    horaLocal,
-    empresa,
-  ]);
+  const wamid = await enviarPlantilla(
+    env,
+    empleado.telefono_e164,
+    plantilla,
+    [empleado.nombre, horaLocal, empresa],
+    [conPausa(BOTON.pausaHacer, pausa.id), conPausa(BOTON.pausaNo, pausa.id)],
+  );
   return { canal, wamid };
 }
 

@@ -23,6 +23,10 @@ conversación. No alcanzaron a usarse, pero rótalas igual.
 ### 0.2 Manda las 2 plantillas a aprobación de Meta · 15 min
 **Es el camino crítico. Todo lo demás depende de esto y no depende de ti.**
 
+**El texto exacto, los valores de ejemplo y el orden de los botones están en
+[`PLANTILLAS.md`](PLANTILLAS.md).** Cópialo de ahí: la redacción del PRD empezaba
+con una variable, que Meta rechaza automáticamente.
+
 En WhatsApp Manager, idioma `es_CO`, categoría `UTILITY`:
 
 `optin_programa_pausas`

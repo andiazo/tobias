@@ -16,7 +16,8 @@
     "test:pausa": "node scripts/e2e-pausa.mjs",
     "test:navegador": "node scripts/e2e-navegador.mjs",
     "test:reporte": "node scripts/e2e-reporte.mjs",
-    "seed:empleados": "node scripts/seed-empleados.mjs"
+    "seed:empleados": "node scripts/seed-empleados.mjs",
+    "test:plantillas": "node scripts/e2e-plantillas.mjs"
   },
   "dependencies": {
     "@kapso/whatsapp-cloud-api": "^0.3.0",

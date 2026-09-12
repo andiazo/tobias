@@ -39,6 +39,9 @@ elige plantilla cuando la ventana está cerrada. Mientras estén vacías, un env
 fuera de ventana falla con un error explícito (`PlantillaNoDisponible`) en vez de
 fallar en silencio.
 
+> **¿Vas a mandar las plantillas a Meta?** El texto listo para copiar está en
+> [`PLANTILLAS.md`](PLANTILLAS.md).
+>
 > **¿Vas a desplegar?** [`RUNBOOK.md`](RUNBOOK.md) tiene el paso a paso completo
 > del piloto: qué hacer antes de tocar código, qué considerar para producción y
 > cuánto toma cada bloque.
@@ -154,6 +157,17 @@ npm run test:cron       # horarios, días hábiles, idempotencia, barrido
 npm run test:pausa      # rutina, sendBeacon, molestias
 npm run test:reporte    # agregaciones, orden, CSV, zona horaria
 npm run test:navegador  # lo mismo en Chromium a 390px de ancho
+```
+
+`npm run test:plantillas` cubre el envío por plantilla y necesita el worker
+levantado con los nombres configurados, porque el resto de los suites verifican
+justo lo contrario — que sin plantillas el envío falle de forma explícita:
+
+```bash
+npx wrangler dev --port 8787 --local … \
+  --var PLANTILLA_OPTIN:optin_programa_pausas \
+  --var PLANTILLA_RECORDATORIO:recordatorio_pausa
+npm run test:plantillas
 ```
 
 Cada suite limpia la base al arrancar (`POST /admin/reset`, solo con
