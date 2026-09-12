@@ -88,6 +88,17 @@ cerrar la terminal** — los secretos de Worker no se pueden volver a leer:
 > Si es la primera vez que usas `workers.dev` en esa cuenta, wrangler te va a
 > pedir que registres un subdominio. Es un paso interactivo, normal.
 
+### En Windows: `deploy.sh` no corre en CMD ni en PowerShell
+
+Es un script de bash. Dos salidas:
+
+**a) Git Bash** (viene con Git para Windows, ya lo tienes si clonaste). Abre la
+carpeta del repo, clic derecho → *Git Bash Here*, y corre los mismos comandos de
+arriba tal cual.
+
+**b) Paso a paso en CMD.** El bloque completo está más abajo, en
+[Despliegue manual en CMD](#despliegue-manual-en-cmd).
+
 ### Completa `wrangler.toml` y vuelve a desplegar · 3 min
 Solo si el script no lo dejó bien:
 
@@ -100,6 +111,53 @@ PUBLIC_BASE_URL = "https://<tu-worker>.workers.dev"
 npx wrangler deploy
 curl https://<tu-worker>.workers.dev/health
 ```
+
+---
+
+### Despliegue manual en CMD
+
+Los mismos seis pasos del script, a mano. Ojo con `set` en CMD: sin comillas y
+sin espacios alrededor del `=`, o las comillas quedan dentro del valor.
+
+```bat
+git clone https://github.com/andiazo/tobias.git
+cd tobias
+git checkout claude/new-session-k5mied
+npm install
+
+set CLOUDFLARE_ACCOUNT_ID=a2af22052e5e28e0c34f74d1ac9ab8e2
+set CLOUDFLARE_API_TOKEN=pega-aqui-el-token
+
+:: 1. Base de datos. Copia el database_id que imprime.
+npx wrangler d1 create pausas-activas
+node scripts/config.mjs database_id PEGA-EL-ID-AQUI
+
+:: 2. Migraciones
+npx wrangler d1 migrations apply pausas-activas --remote
+
+:: 3. Genera tres secretos y guardalos antes de seguir
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+:: 4. Guardalos. Cada comando pregunta y tu pegas el valor.
+npx wrangler secret put KAPSO_API_KEY
+npx wrangler secret put TOKEN_SECRET
+npx wrangler secret put ADMIN_TOKEN
+npx wrangler secret put WEBHOOK_VERIFY_TOKEN
+npx wrangler secret put WEBHOOK_SECRETO_URL
+
+:: 5. Despliega y copia la URL que imprime
+npx wrangler deploy
+node scripts/config.mjs PUBLIC_BASE_URL https://TU-URL.workers.dev
+npx wrangler deploy
+
+:: 6. Verifica y crea la empresa
+set W=https://TU-URL.workers.dev
+set A=el-admin-token-que-generaste
+curl %W%/health
+curl -X POST "%W%/admin/empresa" -H "authorization: Bearer %A%" -H "content-type: application/json" -d "{\"nombre\":\"Empresa Piloto SAS\",\"horarios\":[\"10:00\",\"14:30\",\"16:30\"]}"
+```
+
+`node scripts/config.mjs` sin argumentos te muestra cómo quedó la configuración.
 
 ---
 
