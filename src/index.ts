@@ -25,6 +25,10 @@ app.post("/webhook/kapso", async (c) => {
   if (c.env.META_APP_SECRET) {
     const ok = await firmaValida(raw, c.req.header("x-hub-signature-256") ?? null, c.env.META_APP_SECRET);
     if (!ok) return c.text("firma invalida", 401);
+  } else {
+    // Sin app secret cualquiera puede fabricar un evento y hacernos enviar
+    // mensajes. Sirve para arrancar, no para el piloto con datos reales.
+    console.warn("META_APP_SECRET sin configurar: el webhook acepta eventos sin verificar firma");
   }
 
   let payload: unknown;

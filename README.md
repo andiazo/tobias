@@ -38,6 +38,24 @@ fallar en silencio.
 
 ## Puesta en marcha
 
+Todo el despliegue en un comando:
+
+```bash
+export CLOUDFLARE_ACCOUNT_ID=...
+export CLOUDFLARE_API_TOKEN=...
+export KAPSO_API_KEY=...
+./scripts/deploy.sh
+```
+
+Crea la base D1, aplica migraciones, genera y guarda los secretos, despliega dos
+veces (la segunda ya con `PUBLIC_BASE_URL`), crea la empresa del piloto e imprime
+la URL del webhook y el `ADMIN_TOKEN`. Es idempotente.
+
+Falta un paso manual después: apuntar el webhook de Kapso a
+`https://<worker>/webhook/kapso` con el verify token que imprime el script.
+
+### A mano, si prefieres
+
 ```bash
 npm install
 
@@ -50,7 +68,7 @@ npx wrangler secret put KAPSO_API_KEY        # X-API-Key del proxy de Kapso
 npx wrangler secret put TOKEN_SECRET         # cualquier cadena aleatoria larga
 npx wrangler secret put ADMIN_TOKEN          # protege /admin/*
 npx wrangler secret put WEBHOOK_VERIFY_TOKEN # hub.verify_token del webhook
-npx wrangler secret put META_APP_SECRET      # opcional: si está, la firma es obligatoria
+npx wrangler secret put META_APP_SECRET      # ver aviso abajo
 
 # 3. Completa en wrangler.toml [vars]:
 #    WHATSAPP_PHONE_NUMBER_ID y PUBLIC_BASE_URL (la URL pública del Worker)
@@ -59,8 +77,13 @@ npm run deploy
 ```
 
 En Kapso, apunta el webhook a `https://<tu-worker>/webhook/kapso`. La ruta responde
-el handshake `GET` con `hub.verify_token` y verifica `X-Hub-Signature-256` en cada
-`POST` si `META_APP_SECRET` está configurado.
+el handshake `GET` con `hub.verify_token`.
+
+> **`META_APP_SECRET` antes del piloto real.** Si no está configurado, el webhook
+> acepta cualquier `POST` sin verificar `X-Hub-Signature-256`: quien conozca la URL
+> puede fabricar un evento y hacer que el Worker envíe mensajes. Está así para
+> poder arrancar sin el app secret de Meta, y el Worker lo avisa en los logs.
+> Configúralo antes de cargar empleados reales.
 
 ## Probar
 

@@ -17,7 +17,7 @@ migrations_dir = "migrations"
 # Proxy de Kapso compatible con Meta Cloud API.
 KAPSO_BASE_URL = "https://api.kapso.ai/meta/whatsapp"
 # Numero de WhatsApp del piloto (phone_number_id de Meta / Kapso).
-WHATSAPP_PHONE_NUMBER_ID = ""
+WHATSAPP_PHONE_NUMBER_ID = "1317600904767169"
 # Base publica del Worker, usada para construir los links /p/:token.
 PUBLIC_BASE_URL = ""
 # Modo prueba: un numero desconocido que escribe primero queda registrado
